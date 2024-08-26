@@ -51,6 +51,7 @@
                     <li><a class="dropdown-item generator-option" href="#" data-generator="openai">OpenAI</a></li>
                     <li><a class="dropdown-item generator-option" href="#" data-generator="stability">Stability</a></li>
                     <li><a class="dropdown-item generator-option" href="#" data-generator="boreal">Boreal</a></li>
+                    <li><a class="dropdown-item generator-option" href="#" data-generator="phantasma-anime">Phantasma Anime</a></li>
                 </ul>
                 <p id="selectedGenerator">Selected Generator: Flux</p>
             </div>
@@ -69,7 +70,7 @@
         <form id="promptForm" class="mt-3">
             <textarea id="promptInput" class="form-control" rows="3" placeholder="Enter a prompt..."></textarea>
             <br>
-            <button type="submit" class="btn btn-primary">Generate Image</button>
+            <button type="submit" id="generateBtn" class="btn btn-primary">Generate Image</button>
             <div class="spinner-border text-primary mt-2" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
@@ -89,15 +90,18 @@
             });
         });
 
-        document.getElementById('promptForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
+        async function submitPrompt() {
             const promptInput = document.getElementById('promptInput');
             const chatBody = document.getElementById('chatBody');
             const spinner = document.querySelector('.spinner-border');
+            const generateBtn = document.getElementById('generateBtn');
 
             // Get the user input
             const prompt = promptInput.value;
+
+            if (!prompt.trim()) {
+                return; // Do nothing if the input is empty
+            }
 
             // Append the user message to the chat
             chatBody.innerHTML += `
@@ -109,7 +113,8 @@
             // Clear the input field
             promptInput.value = '';
 
-            // Show the loading spinner
+            // Hide the "Generate Image" button and show the spinner
+            generateBtn.style.display = 'none';
             spinner.style.display = 'block';
 
             try {
@@ -123,10 +128,10 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Append the bot's response with the image centered in the response box
+                    // Append the model name with the image centered in the response box
                     chatBody.innerHTML += `
                         <div class="bot-message">
-                            <strong>Bot:</strong><br>
+                            <strong>${selectedGenerator.charAt(0).toUpperCase() + selectedGenerator.slice(1)}:</strong><br>
                             <div class="bot-image">
                                 <img src="${data.image_url}" alt="Generated Image">
                             </div>
@@ -147,11 +152,25 @@
                     </div>
                 `;
             } finally {
-                // Hide the loading spinner
+                // Show the "Generate Image" button and hide the spinner
+                generateBtn.style.display = 'block';
                 spinner.style.display = 'none';
 
                 // Scroll to the bottom of the chat
                 chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+
+        document.getElementById('promptForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitPrompt();
+        });
+
+        // Listen for the Enter key and submit the prompt
+        document.getElementById('promptInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitPrompt();
             }
         });
 
@@ -179,13 +198,13 @@
             const response = await fetch('/conversation-history');
             const conversation = await response.json();
 
-            conversation.forEach(({ prompt, image_url }) => {
+            conversation.forEach(({ prompt, generator, image_url }) => {
                 chatBody.innerHTML += `
                     <div class="user-message">
                         <strong>User:</strong><br>${prompt}
                     </div>
                     <div class="bot-message">
-                        <strong>Bot:</strong><br>
+                        <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
                         <div class="bot-image">
                             <img src="${image_url}" alt="Generated Image">
                         </div>
