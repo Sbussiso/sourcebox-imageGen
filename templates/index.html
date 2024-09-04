@@ -1,8 +1,10 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Correct Bootstrap CDN link with proper integrity and crossorigin attributes -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <title>Image Generator Chatbot</title>
     <style>
@@ -35,8 +37,14 @@
         .spinner-border {
             display: none;
         }
+        .download-icon, .regenerate-icon {
+            cursor: pointer;
+            margin-top: 5px;
+            text-align: center;
+        }
     </style>
 </head>
+
 <body>
     <div class="container mt-5">
         <!-- Clear History Button -->
@@ -71,13 +79,15 @@
             <textarea id="promptInput" class="form-control" rows="3" placeholder="Enter a prompt..."></textarea>
             <br>
             <button type="submit" id="generateBtn" class="btn btn-primary">Generate Image</button>
-            <div class="spinner-border text-primary mt-2" role="status">
+            <div class="spinner-border text-primary mt-2" role="status" id="generateSpinner">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </form>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <br/>
+    <br/>
+    <br/>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="anonymous"></script>
     <script>
         let selectedGenerator = 'flux'; // Default generator
 
@@ -90,10 +100,15 @@
             });
         });
 
+        // Function to generate a unique ID for each regenerate button and spinner
+        function generateUniqueId() {
+            return Math.random().toString(36).substring(7);
+        }
+
         async function submitPrompt() {
             const promptInput = document.getElementById('promptInput');
             const chatBody = document.getElementById('chatBody');
-            const spinner = document.querySelector('.spinner-border');
+            const spinner = document.getElementById('generateSpinner');
             const generateBtn = document.getElementById('generateBtn');
 
             // Get the user input
@@ -113,7 +128,7 @@
             // Clear the input field
             promptInput.value = '';
 
-            // Hide the "Generate Image" button and show the spinner
+            // Replace the "Generate Image" button with the spinner
             generateBtn.style.display = 'none';
             spinner.style.display = 'block';
 
@@ -126,14 +141,33 @@
                 });
 
                 const data = await response.json();
+                const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
 
                 if (response.ok) {
-                    // Append the model name with the image centered in the response box
+                    // Append the model name with the image and download/regenerate icons
                     chatBody.innerHTML += `
                         <div class="bot-message">
                             <strong>${selectedGenerator.charAt(0).toUpperCase() + selectedGenerator.slice(1)}:</strong><br>
                             <div class="bot-image">
                                 <img src="${data.image_url}" alt="Generated Image">
+                                <div class="image-actions d-flex justify-content-center">
+                                    <div class="download-icon mx-2">
+                                        <a href="/download-image/${data.image_url.split('/').pop()}" download>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                    <div class="regenerate-icon mx-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="${prompt}" data-generator="${selectedGenerator}" viewBox="0 0 16 16">
+                                            <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+                                        </svg>
+                                        <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -152,7 +186,7 @@
                     </div>
                 `;
             } finally {
-                // Show the "Generate Image" button and hide the spinner
+                // Replace the spinner with the "Generate Image" button
                 generateBtn.style.display = 'block';
                 spinner.style.display = 'none';
 
@@ -160,6 +194,98 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
+
+        // Function to regenerate an image
+        async function regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId) {
+            const chatBody = document.getElementById('chatBody');
+            const generateSpinner = document.getElementById('generateSpinner');
+            const generateBtn = document.getElementById('generateBtn');
+
+            const regenerateBtn = document.getElementById(regenerateBtnId);
+            const regenerateSpinner = document.getElementById(regenerateSpinnerId);
+
+            // Replace the regenerate icon with the spinner
+            regenerateBtn.style.display = 'none';
+            regenerateSpinner.style.display = 'inline-block';
+
+            // Replace the generate button with its spinner
+            generateBtn.style.display = 'none';
+            generateSpinner.style.display = 'block';
+
+            try {
+                const response = await fetch('/regenerate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt, generator: generator })
+                });
+
+                const data = await response.json();
+                const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
+
+                if (response.ok) {
+                    // Append the regenerated image to the chat
+                    chatBody.innerHTML += `
+                        <div class="bot-message">
+                            <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)} (Regenerated):</strong><br>
+                            <div class="bot-image">
+                                <img src="${data.image_url}" alt="Regenerated Image">
+                                <div class="image-actions d-flex justify-content-center">
+                                    <div class="download-icon mx-2">
+                                        <a href="/download-image/${data.image_url.split('/').pop()}" download>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                    <div class="regenerate-icon mx-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="${prompt}" data-generator="${generator}" viewBox="0 0 16 16">
+                                            <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+                                        </svg>
+                                        <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    chatBody.innerHTML += `
+                        <div class="bot-message text-danger">
+                            <strong>Error:</strong> ${data.error}
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                chatBody.innerHTML += `
+                    <div class="bot-message text-danger">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                // Make sure both buttons return correctly
+                regenerateBtn.style.display = 'inline-block';
+                regenerateSpinner.style.display = 'none';
+
+                generateBtn.style.display = 'block';
+                generateSpinner.style.display = 'none';
+
+                chatBody.scrollTop = chatBody.scrollHeight;  // Scroll to the bottom
+            }
+        }
+
+        // Add event listener for "Regenerate" icon clicks
+        document.addEventListener('click', function (event) {
+            if (event.target.classList.contains('regenerate-btn')) {
+                const regenerateBtnId = event.target.id;
+                const regenerateSpinnerId = `regenerateSpinner-${regenerateBtnId.split('-')[1]}`;
+                const prompt = event.target.getAttribute('data-prompt');
+                const generator = event.target.getAttribute('data-generator');
+                regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId);
+            }
+        });
 
         document.getElementById('promptForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -199,6 +325,8 @@
             const conversation = await response.json();
 
             conversation.forEach(({ prompt, generator, image_url }) => {
+                const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
+
                 chatBody.innerHTML += `
                     <div class="user-message">
                         <strong>User:</strong><br>${prompt}
@@ -207,6 +335,24 @@
                         <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
                         <div class="bot-image">
                             <img src="${image_url}" alt="Generated Image">
+                            <div class="image-actions d-flex justify-content-center">
+                                <div class="download-icon mx-2">
+                                    <a href="/download-image/${image_url.split('/').pop()}" download>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                                <div class="regenerate-icon mx-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="${prompt}" data-generator="${generator}" viewBox="0 0 16 16">
+                                        <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+                                    </svg>
+                                    <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
