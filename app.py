@@ -76,7 +76,7 @@ def check_authentication():
         flash('You need to login first.', 'danger')
         return False
 
-
+#before requests are made
 @app.before_request
 def before_request():
     logger.debug(f"Before request: {request.endpoint}")
