@@ -36,6 +36,9 @@
 > Tailored for anime and manga-style imagery, Phantasma-Anime generates highly stylized and vibrant illustrations. It’s ideal for creating characters, scenes, and backgrounds in a classic anime style, making it a favorite among anime enthusiasts and artists.
 
 <br/>
+<br/>
+<br/>
+<br/>
 
 ### Download images
 
