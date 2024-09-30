@@ -45,6 +45,9 @@
 > Take your images off the sourcebox platform and store them locally. Simply press the download icon under the image that was generated.
 
 <br/>
+<br/>
+<br/>
+<br/>
 
 ### regenerate image feature
 
