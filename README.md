@@ -40,15 +40,20 @@
 <br/>
 <br/>
 
-### Download images
+### Download Images
 
-> Take your images off the sourcebox platform and store them locally. Simply press the download icon under the image that was generated.
+> After generating an image, you can easily download it to your local device. This allows you to store, share, or use your creations in external projects. Simply click on the ***download icon*** below the generated image, and the file will be saved directly to your computer in its highest available resolution. This feature ensures that you have full access to your images outside the SourceBox platform.
 
 <br/>
 <br/>
 <br/>
 <br/>
 
-### regenerate image feature
+### Regenerate Images
 
-> If you dont like the way an image turns out you can simply press the regenerate icon under the image that was generated.
+> If an image doesn’t turn out as expected or if you want to explore variations of the same concept, you can use the regenerate feature to create a new version based on the same prompt. By clicking on the regenerate icon under the image, the selected generator will produce a fresh output, allowing you to refine and iterate until you achieve the desired result.
+
+<br/>
+<br/>
+<br/>
+<br/>
