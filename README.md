@@ -8,12 +8,15 @@
 <br/>
 
 ### Types of image generators
-> SourceBox has a variety of image generators to choose from:
-> - Dalle-2
-> - FLUX
-> - Stable Diffusion
-> - Boreal
-> - Phantasma-anime
+> SourceBox has a variety of image generators to choose from
+
+<br/>
+
+- Dalle-2
+- FLUX
+- Stable Diffusion
+- Boreal
+- Phantasma-anime
 
 <br/>
 
