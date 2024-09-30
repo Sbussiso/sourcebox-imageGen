@@ -45,7 +45,7 @@
 > After generating an image, you can easily download it to your local device. This allows you to store, share, or use your creations in external projects. Simply click on the ***download icon*** below the generated image, and the file will be saved directly to your computer in its highest available resolution. This feature ensures that you have full access to your images outside the SourceBox platform.
 
 <br/>
-<br/>
+
 
 
 ### Regenerate Images
@@ -54,6 +54,7 @@
 
 <br/>
 <br/>
-
+<br/>
+<br/>
 
 ## Getting into it with ImaGen
