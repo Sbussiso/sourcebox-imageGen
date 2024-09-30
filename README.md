@@ -46,8 +46,7 @@
 
 <br/>
 <br/>
-<br/>
-<br/>
+
 
 ### Regenerate Images
 
@@ -55,5 +54,6 @@
 
 <br/>
 <br/>
-<br/>
-<br/>
+
+
+## Getting into it with ImaGen
