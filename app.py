@@ -10,6 +10,7 @@ import traceback
 import random
 import string
 import logging
+import replicate
 
 # Load environment variables from the .env file to make sensitive information (like API keys) accessible
 load_dotenv()
@@ -269,6 +270,80 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     return redirect('https://sourcebox-official-website-9f3f8ae82f0b.herokuapp.com/sign_up')
+
+@app.route('/generate-video', methods=['POST'])
+def generate_video():
+    try:
+        logger.info("Starting video generation process")
+
+        # Load environment variables
+        load_dotenv()
+        api_token = os.getenv("REPLICATE_API_TOKEN")
+        if not api_token:
+            logger.error("API Token not found. Please check your .env file.")
+            return jsonify({"error": "API Token not found"}), 500
+
+        # Get the model and version
+        logger.debug("Fetching model and version")
+        try:
+            model = replicate.models.get("sunfjun/stable-video-diffusion")
+            version = model.versions.get("d68b6e09eedbac7a49e3d8644999d93579c386a083768235cabca88796d70d82")
+        except Exception as e:
+            logger.error(f"Error fetching model or version: {e}")
+            return jsonify({"error": "Error fetching model or version"}), 500
+
+        # Extract input image path from request
+        data = request.get_json()
+        image_path = data.get('image_url')  # This is actually a path in the static folder
+        if not image_path:
+            logger.error("No image path provided")
+            return jsonify({"error": "Image path is required"}), 400
+
+        # Construct the full path to the image
+        full_image_path = os.path.join('static', image_path)
+        logger.debug(f"Full image path: {full_image_path}")
+
+        # Open the image file
+        with open(full_image_path, 'rb') as image_file:
+            logger.info(f"Creating prediction for image file: {full_image_path}")
+            try:
+                # Create a prediction
+                prediction = replicate.predictions.create(
+                    version=version,
+                    input={
+                        "input_image": image_file,
+                        "cond_aug": 0.02,
+                        "decoding_t": 14,
+                        "video_length": "14_frames_with_svd",
+                        "sizing_strategy": "maintain_aspect_ratio",
+                        "motion_bucket_id": 127,
+                        "frames_per_second": 6
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Error creating prediction: {e}")
+                return jsonify({"error": "Error creating prediction"}), 500
+
+            # Wait for the prediction to complete
+            logger.info("Waiting for prediction to complete")
+            prediction.wait()
+
+            # Check the status and get the output
+            if prediction.status == 'succeeded':
+                output_url = prediction.output
+                logger.info(f"Prediction succeeded, video URL: {output_url}")
+                return jsonify({"video_url": output_url}), 200
+            else:
+                logger.error(f"Prediction failed with status: {prediction.status}, detail: {prediction.error}")
+                return jsonify({"error": f"Prediction failed with status: {prediction.status}"}), 500
+
+    except replicate.exceptions.ReplicateError as e:
+        logger.error(f"Replicate API error during video generation: {e}")
+        return jsonify({"error": "An error occurred with the Replicate API"}), 500
+    except Exception as e:
+        logger.error(f"Unexpected error during video generation: {e}")
+        traceback.print_exc()
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
