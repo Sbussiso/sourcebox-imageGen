@@ -209,11 +209,11 @@ def generate_image():
         session["conversation"].append({
             "prompt": unique_prompt,
             "generator": generator,
-            "image_url": image_path
+            "image_url": image_name  # Store only the image name
         })
         session.modified = True
 
-        return jsonify({"image_url": image_path}), 200
+        return jsonify({"image_url": image_name}), 200
 
     except Exception as e:
         traceback.print_exc()
@@ -312,7 +312,7 @@ def generate_video():
                     version=version,
                     input={
                         "input_image": image_file,
-                        "cond_aug": 0.02,
+                        "cond_aug": 0.05,
                         "decoding_t": 14,
                         "video_length": "14_frames_with_svd",
                         "sizing_strategy": "maintain_aspect_ratio",
@@ -332,7 +332,25 @@ def generate_video():
             if prediction.status == 'succeeded':
                 output_url = prediction.output
                 logger.info(f"Prediction succeeded, video URL: {output_url}")
-                return jsonify({"video_url": output_url}), 200
+
+                # Download the video
+                video_response = requests.get(output_url)
+                video_response.raise_for_status()
+
+                # Save the video to the static directory
+                video_name = f"video_{uuid.uuid4().hex}.mp4"
+                video_path = os.path.join('static', video_name)
+                with open(video_path, 'wb') as video_file:
+                    video_file.write(video_response.content)
+
+                logger.info(f"Video saved successfully at {video_path}")
+
+                # Save the video URL in the session
+                if "videos" not in session:
+                    session["videos"] = []
+                session["videos"].append(video_name)
+
+                return jsonify({"video_url": video_name}), 200
             else:
                 logger.error(f"Prediction failed with status: {prediction.status}, detail: {prediction.error}")
                 return jsonify({"error": f"Prediction failed with status: {prediction.status}"}), 500
@@ -344,6 +362,14 @@ def generate_video():
         logger.error(f"Unexpected error during video generation: {e}")
         traceback.print_exc()
         return jsonify({"error": "An unexpected error occurred"}), 500
+
+
+
+@app.route('/get-videos', methods=['GET'])
+def get_videos():
+    videos = session.get("videos", [])
+    return jsonify({"videos": videos})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -48,10 +47,66 @@
             margin-top: 5px;
             text-align: center;
         }
+        #videoContainer video {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .media-wrapper {
+            background-color: #f4f4f4; /* Match the background color of the image container */
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            text-align: center; /* Center the video and download icon */
+        }
+
+        .media-wrapper img {
+            width: 80%; /* Set a smaller width for images */
+            max-width: 400px; /* Set a smaller maximum width */
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .media-wrapper video {
+            width: 80%; /* Ensure videos have the same width */
+            max-width: 700px; /* Ensure videos have the same maximum width */
+            height: auto;
+            border-radius: 5px;
+        }
     </style>
 </head>
 
 <body>
+    <div id="editMessage" style="display: none; text-align: center; background-color: #f8d7da; color: #721c24; padding: 10px;">
+        <button class="btn btn-primary mx-1" id="button1">Upscale</button>
+        <button class="btn btn-secondary mx-1" id="button2">Remove Background</button>
+        <button class="btn btn-success mx-1" id="button3">Image Mixer</button>
+        <button id="closeEditMessage" class="btn btn-danger mx-1">Close</button>
+    </div>
+    <div id="upscalePopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
+        <div class="card-body">
+            <h5 class="card-title">Upscale</h5>
+            <p class="card-text">Upscale your image to a higher quality.</p>
+            <button class="btn btn-primary upscale-action" data-bs-toggle="modal" data-bs-target="#upscaleModal">Do it!</button>
+            <button class="btn btn-danger mt-2" onclick="document.getElementById('upscalePopup').style.display='none'">Close</button>
+        </div>
+    </div>
+    <div id="removeBackgroundPopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
+        <div class="card-body">
+            <h5 class="card-title">Remove Background</h5>
+            <p class="card-text">Attempts to remove the background from your image.</p>
+            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#removeBackgroundModal">Remove</button>
+            <button class="btn btn-danger mt-2" onclick="document.getElementById('removeBackgroundPopup').style.display='none'">Close</button>
+        </div>
+    </div>
+    <div id="imageMixerPopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
+        <div class="card-body">
+            <h5 class="card-title">Image Mixer</h5>
+            <p class="card-text">Mix two images to create a new one.</p>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#imageMixerModal">Mix Images</button>
+            <button class="btn btn-danger mt-2" onclick="document.getElementById('imageMixerPopup').style.display='none'">Close</button>
+        </div>
+    </div>
     <div class="container mt-5">
         <!-- Clear History Button -->
         <div class="d-flex justify-content-between mb-3">
@@ -91,8 +146,13 @@
         </form>
 
         <!-- Video container -->
-        <div id="videoContainer" class="mt-4">
-            <!-- Video will be inserted here -->
+        <div class="card mt-4">
+            <div class="card-header">
+                Video Generator
+            </div>
+            <div class="card-body" id="videoContainer">
+                <!-- Video will be inserted here -->
+            </div>
         </div>
     </div>
     <br/>
@@ -115,10 +175,99 @@
         </div>
       </div>
     </div>
+    <!-- Upscale Modal -->
+    <div class="modal fade" id="upscaleModal" tabindex="-1" aria-labelledby="upscaleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upscaleModalLabel">Upscale Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img id="upscaleImage" src="" alt="Image to be upscaled" style="max-width: 100%; height: auto; border-radius: 5px;">
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Placeholder for new image -->
+                            <div id="newImagePlaceholder" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                                <span>New Image Placeholder</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Background Modal -->
+    <div class="modal fade" id="removeBackgroundModal" tabindex="-1" aria-labelledby="removeBackgroundModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeBackgroundModalLabel">Remove Background</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img id="removeBackgroundImage" src="" alt="Image for background removal" style="max-width: 100%; height: auto; border-radius: 5px;">
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Placeholder for new image -->
+                            <div id="newImagePlaceholder" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                                <span>New Image Placeholder</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Mixer Modal -->
+    <div class="modal fade" id="imageMixerModal" tabindex="-1" aria-labelledby="imageMixerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageMixerModalLabel">Image Mixer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img id="imageMixerImage" src="" alt="Image for mixing" style="max-width: 100%; height: auto; border-radius: 5px;">
+                        </div>
+                        <div class="col-md-4">
+                            <!-- First Placeholder for new image -->
+                            <div id="newImagePlaceholder1" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                                <span>New Image Placeholder 1</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <!-- Second Placeholder for new image -->
+                            <div id="newImagePlaceholder2" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                                <span>New Image Placeholder 2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="anonymous"></script>
     <script>
         let selectedGenerator = 'flux'; // Default generator
-
+    
         // Function to update selected generator when dropdown item is clicked
         document.querySelectorAll('.generator-option').forEach(item => {
             item.addEventListener('click', function (e) {
@@ -127,39 +276,39 @@
                 document.getElementById('selectedGenerator').innerText = `Selected Generator: ${selectedGenerator.charAt(0).toUpperCase() + selectedGenerator.slice(1)}`;
             });
         });
-
+    
         // Function to generate a unique ID for each regenerate button and spinner
         function generateUniqueId() {
             return Math.random().toString(36).substring(7);
         }
-
+    
         async function submitPrompt() {
             const promptInput = document.getElementById('promptInput');
             const chatBody = document.getElementById('chatBody');
             const spinner = document.getElementById('generateSpinner');
             const generateBtn = document.getElementById('generateBtn');
-
+    
             // Get the user input
             const prompt = promptInput.value;
-
+    
             if (!prompt.trim()) {
                 return; // Do nothing if the input is empty
             }
-
+    
             // Append the user message to the chat
             chatBody.innerHTML += `
                 <div class="user-message">
                     <strong>User:</strong><br>${prompt}
                 </div>
             `;
-
+    
             // Clear the input field
             promptInput.value = '';
-
+    
             // Replace the "Generate Image" button with the spinner
             generateBtn.style.display = 'none';
             spinner.style.display = 'block';
-
+    
             try {
                 // Send the prompt to the server with the selected generator
                 const response = await fetch('/generate-image', {
@@ -167,10 +316,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: prompt, generator: selectedGenerator })
                 });
-
+    
                 const data = await response.json();
                 const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
-
+    
                 if (response.ok) {
                     // Append the model name with the image and download/regenerate icons
                     chatBody.innerHTML += `
@@ -202,6 +351,12 @@
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
+                                    <div class="edit-icon mx-2" role="button" tabindex="0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -213,7 +368,7 @@
                         </div>
                     `;
                 }
-
+    
             } catch (error) {
                 chatBody.innerHTML += `
                     <div class="bot-message text-danger">
@@ -224,39 +379,39 @@
                 // Replace the spinner with the "Generate Image" button
                 generateBtn.style.display = 'block';
                 spinner.style.display = 'none';
-
+    
                 // Scroll to the bottom of the chat
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
-
+    
         // Function to regenerate an image
         async function regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId) {
             const chatBody = document.getElementById('chatBody');
             const generateSpinner = document.getElementById('generateSpinner');
             const generateBtn = document.getElementById('generateBtn');
-
+    
             const regenerateBtn = document.getElementById(regenerateBtnId);
             const regenerateSpinner = document.getElementById(regenerateSpinnerId);
-
+    
             // Replace the regenerate icon with the spinner
             regenerateBtn.style.display = 'none';
             regenerateSpinner.style.display = 'inline-block';
-
+    
             // Replace the generate button with its spinner
             generateBtn.style.display = 'none';
             generateSpinner.style.display = 'block';
-
+    
             try {
                 const response = await fetch('/regenerate-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: prompt, generator: generator })
                 });
-
+    
                 const data = await response.json();
                 const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
-
+    
                 if (response.ok) {
                     // Append the regenerated image to the chat
                     chatBody.innerHTML += `
@@ -288,6 +443,12 @@
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
+                                    <div class="edit-icon mx-2" role="button" tabindex="0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -299,7 +460,7 @@
                         </div>
                     `;
                 }
-
+    
             } catch (error) {
                 chatBody.innerHTML += `
                     <div class="bot-message text-danger">
@@ -310,14 +471,14 @@
                 // Make sure both buttons return correctly
                 regenerateBtn.style.display = 'inline-block';
                 regenerateSpinner.style.display = 'none';
-
+    
                 generateBtn.style.display = 'block';
                 generateSpinner.style.display = 'none';
-
+    
                 chatBody.scrollTop = chatBody.scrollHeight;  // Scroll to the bottom
             }
         }
-
+    
         // Add event listener for "Regenerate" icon clicks
         document.addEventListener('click', function (event) {
             if (event.target.classList.contains('regenerate-btn')) {
@@ -327,12 +488,12 @@
                 const generator = event.target.getAttribute('data-generator');
                 regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId);
             }
-
+    
             if (event.target.closest('.camera-icon')) {
                 const imgElement = event.target.closest('.bot-image').querySelector('img');
                 const imagePath = imgElement.src.split('/').pop(); // Extract the file name from the URL
                 console.log('Image path:', imagePath); // Log the image path for debugging
-
+    
                 fetch('/generate-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -352,23 +513,100 @@
                     alert('An error occurred while generating the video.');
                 });
             }
-        });
+    
+            if (event.target.closest('.edit-icon')) {
+                const editMessage = document.getElementById('editMessage');
+                editMessage.style.display = 'block'; // Show the edit toolbar
 
-        function displayVideo(videoUrl) {
+                // Get the image URL from the selected bot message
+                const imgElement = event.target.closest('.bot-image').querySelector('img');
+                const imageUrl = imgElement.src; // This should be the URL of the image in the static folder
+
+                // Set the image URL in all modals
+                document.getElementById('upscaleImage').src = imageUrl;
+                document.getElementById('removeBackgroundImage').src = imageUrl;
+                document.getElementById('imageMixerImage').src = imageUrl;
+            }
+    
+            if (event.target.id === 'closeEditMessage') {
+                const editMessage = document.getElementById('editMessage');
+                editMessage.style.display = 'none'; // Hide the message when close button is clicked
+            }
+    
+            if (event.target.id === 'button1') {
+                const upscaleModal = new bootstrap.Modal(document.getElementById('upscaleModal'));
+                upscaleModal.show();
+            }
+    
+            if (event.target.closest('#button2')) {
+                const removeBackgroundModal = new bootstrap.Modal(document.getElementById('removeBackgroundModal'));
+                removeBackgroundModal.show();
+            }
+    
+            if (event.target.closest('#button3')) {
+                const imageMixerModal = new bootstrap.Modal(document.getElementById('imageMixerModal'));
+                imageMixerModal.show();
+            }
+        });
+    
+        window.addEventListener('load', async () => {
             const videoContainer = document.getElementById('videoContainer');
-            videoContainer.innerHTML = `
-                <video controls width="100%">
-                    <source src="${videoUrl}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+            
+            // Fetch the saved videos from the server
+            const response = await fetch('/get-videos');
+            const data = await response.json();
+    
+            if (response.ok && data.videos) {
+                data.videos.forEach(videoName => {
+                    videoContainer.innerHTML += `
+                        <div class="media-wrapper">
+                            <video controls>
+                                <source src="/static/${videoName}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div class="video-actions d-flex justify-content-center mt-2">
+                                <div class="download-icon mx-2">
+                                    <a href="/static/${videoName}" download>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        });
+    
+        function displayVideo(videoName) {
+            const videoContainer = document.getElementById('videoContainer');
+            videoContainer.innerHTML += `
+                <div class="media-wrapper">
+                    <video controls>
+                        <source src="/static/${videoName}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="video-actions d-flex justify-content-center mt-2">
+                        <div class="download-icon mx-2">
+                            <a href="/static/${videoName}" download>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             `;
         }
-
+    
         document.getElementById('promptForm').addEventListener('submit', function(e) {
             e.preventDefault();
             submitPrompt();
         });
-
+    
         // Listen for the Enter key and submit the prompt
         document.getElementById('promptInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -376,7 +614,7 @@
                 submitPrompt();
             }
         });
-
+    
         // Clear history when the "Clear History" button is clicked
         document.getElementById('clearHistoryBtn').addEventListener('click', async function() {
             try {
@@ -384,7 +622,7 @@
                 if (response.ok) {
                     const result = await response.json();
                     alert(result.message);
-
+    
                     // Clear the chat history in the frontend
                     document.getElementById('chatBody').innerHTML = '';
                 } else {
@@ -394,16 +632,16 @@
                 console.error('Error:', error);
             }
         });
-
+    
         // Fetch and load conversation history on page load
         window.addEventListener('load', async () => {
             const chatBody = document.getElementById('chatBody');
             const response = await fetch('/conversation-history');
             const conversation = await response.json();
-
+    
             conversation.forEach(({ prompt, generator, image_url }) => {
                 const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
-
+    
                 chatBody.innerHTML += `
                     <div class="user-message">
                         <strong>User:</strong><br>${prompt}
@@ -436,12 +674,18 @@
                                         <path d="M9 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6M7 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
                                     </svg>
                                 </div>
+                                <div class="edit-icon mx-2" role="button" tabindex="0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
             });
-
+    
             // Scroll to the bottom of the chat after loading the history
             chatBody.scrollTop = chatBody.scrollHeight;
         });
