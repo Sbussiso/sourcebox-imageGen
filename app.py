@@ -170,6 +170,8 @@ def index():
 @app.route("/generate-image", methods=["POST"])
 def generate_image():
     try:
+        logger.debug("Received request to generate image")
+
         if "conversation" not in session:
             session["conversation"] = []
 
@@ -177,14 +179,20 @@ def generate_image():
         prompt = data.get('prompt')
         generator = data.get('generator')
 
+        logger.debug(f"Prompt: {prompt}, Generator: {generator}")
+
         if not prompt or not generator:
+            logger.error("Prompt and generator type are required.")
             return jsonify({"error": "Prompt and generator type are required."}), 400
 
         unique_prompt = f"{prompt} - {random_sig()}"
+        logger.debug(f"Unique prompt: {unique_prompt}")
 
         if not is_premium_user() and generator != "openai":
+            logger.warning("Non-premium user trying to access non-OpenAI generator")
             return jsonify({"error": "Only OpenAI is available for non-premium users."}), 403
 
+        image_bytes = None
         if generator == "openai":
             image_bytes = query_openai_image(unique_prompt)
         elif generator == "flux":
@@ -196,15 +204,24 @@ def generate_image():
         elif generator == "phantasma-anime":
             image_bytes = query_phantasma_anime_image(unique_prompt)
         else:
+            logger.error("Invalid generator selected")
             return jsonify({"error": "Invalid generator selected"}), 400
 
         if not image_bytes:
+            logger.error("Failed to generate image from the selected API.")
             return jsonify({"error": "Failed to generate image from the selected API."}), 500
 
         image_name = f"{generator}_image_{uuid.uuid4().hex}.png"
         image_path = f"static/{image_name}"
-        image = Image.open(io.BytesIO(image_bytes))
-        image.save(image_path)
+        logger.debug(f"Saving image to: {image_path}")
+
+        try:
+            image = Image.open(io.BytesIO(image_bytes))
+            image.save(image_path)
+            logger.info(f"Image saved successfully: {image_name}")
+        except Exception as e:
+            logger.error(f"Error saving image: {e}")
+            return jsonify({"error": "Error saving image"}), 500
 
         session["conversation"].append({
             "prompt": unique_prompt,
@@ -216,12 +233,24 @@ def generate_image():
         return jsonify({"image_url": image_name}), 200
 
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route("/conversation-history", methods=["GET"])
 def conversation_history():
-    return jsonify(session.get("conversation", []))
+    conversation = session.get("conversation", [])
+    videos = session.get("videos", [])
+    
+    # Combine images and videos into a single list
+    for video in videos:
+        conversation.append({
+            "prompt": "Generated Video",
+            "generator": "video",
+            "video_url": video
+        })
+    
+    return jsonify(conversation)
 
 @app.route("/download-image/<filename>", methods=["GET"])
 def download_image(filename):
@@ -275,7 +304,7 @@ def register():
 def generate_video():
     try:
         logger.info("Starting video generation process")
-
+        
         # Load environment variables
         load_dotenv()
         api_token = os.getenv("REPLICATE_API_TOKEN")
@@ -349,6 +378,7 @@ def generate_video():
                 if "videos" not in session:
                     session["videos"] = []
                 session["videos"].append(video_name)
+                session.modified = True
 
                 return jsonify({"video_url": video_name}), 200
             else:
@@ -363,13 +393,113 @@ def generate_video():
         traceback.print_exc()
         return jsonify({"error": "An unexpected error occurred"}), 500
 
-
-
 @app.route('/get-videos', methods=['GET'])
 def get_videos():
     videos = session.get("videos", [])
     return jsonify({"videos": videos})
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv()
+api_token = os.getenv("REPLICATE_API_TOKEN")
+if not api_token:
+    logger.error("API Token not found. Please check your .env file.")
+    exit(1)
+
+# Initialize the model and version
+try:
+    model = replicate.models.get("batouresearch/magic-image-refiner")
+    version = model.versions.get("507ddf6f977a7e30e46c0daefd30de7d563c72322f9e4cf7cbac52ef0f667b13")
+except Exception as e:
+    logger.error(f"Error fetching model or version: {e}")
+    exit(1)
+
+@app.route('/upscale-image', methods=['POST'])
+def upscale_image():
+    logger.debug("Received request to upscale image")
+    data = request.get_json()
+    image_path = data.get('image_path')
+
+    if not image_path:
+        logger.error("Image path not provided in the request")
+        return jsonify({"error": "Image path is required"}), 400
+
+    try:
+        # Construct the full path to the image
+        full_image_path = os.path.join('static', image_path)
+        logger.debug(f"Full image path: {full_image_path}")
+
+        # Open the image file
+        with open(full_image_path, 'rb') as image_file:
+            logger.info("Creating prediction for image upscaling")
+            prediction = replicate.predictions.create(
+                version=version,
+                input={
+                    "hdr": 0,
+                    "image": image_file,
+                    "steps": 20,
+                    "prompt": "UHD 4k",
+                    "scheduler": "DDIM",
+                    "creativity": 0.25,
+                    "guess_mode": False,
+                    "resolution": "original",
+                    "resemblance": 0.75,
+                    "guidance_scale": 7,
+                    "negative_prompt": "teeth, tooth, open mouth, longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, mutant"
+                }
+            )
+            logger.debug("Waiting for prediction to complete")
+            prediction.wait()
+
+            if prediction.status == 'succeeded' and isinstance(prediction.output, list) and len(prediction.output) > 0:
+                output_url = prediction.output[0]
+                logger.info(f"Prediction succeeded, output URL: {output_url}")
+
+                # Download the upscaled image
+                upscaled_image_response = requests.get(output_url)
+                upscaled_image_response.raise_for_status()
+
+                # Save the upscaled image to the static directory
+                upscaled_image_name = f"upscaled_image_{uuid.uuid4().hex}.png"
+                upscaled_image_path = os.path.join('static', upscaled_image_name)
+                with open(upscaled_image_path, 'wb') as upscaled_image_file:
+                    upscaled_image_file.write(upscaled_image_response.content)
+
+                logger.info(f"Upscaled image saved successfully at {upscaled_image_path}")
+
+                # Add the upscaled image to the session's conversation
+                if "conversation" not in session:
+                    session["conversation"] = []
+
+                session["conversation"].append({
+                    "prompt": "Upscaled Image",
+                    "generator": "upscale",
+                    "image_url": upscaled_image_name
+                })
+                session.modified = True
+
+                # Return the path of the saved upscaled image
+                return jsonify({"output_url": upscaled_image_name}), 200
+            else:
+                logger.error(f"Prediction failed with status: {prediction.status}, detail: {prediction.error}")
+                return jsonify({"error": f"Prediction failed with status: {prediction.status}"}), 500
+
+    except FileNotFoundError:
+        logger.error(f"Image file not found at path: {full_image_path}")
+        return jsonify({"error": "Image file not found"}), 404
+    except replicate.exceptions.ReplicateError as e:
+        logger.error(f"Replicate API error during prediction: {e}")
+        return jsonify({"error": "An error occurred with the Replicate API"}), 500
+    except requests.exceptions.RequestException as e:
+        logger.error(f"HTTP request error: {e}")
+        return jsonify({"error": "An error occurred while making an HTTP request"}), 500
+    except Exception as e:
+        logger.error(f"Unexpected error during prediction: {e}")
+        traceback.print_exc()
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

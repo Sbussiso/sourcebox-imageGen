@@ -29,7 +29,7 @@
         .bot-image img {
             display: block;
             margin: 10px auto;
-            max-width: 100%;
+            max-width: 50%; /* Reduce the maximum width */
             height: auto;
             border-radius: 5px;
         }
@@ -73,6 +73,31 @@
             height: auto;
             border-radius: 5px;
         }
+
+        .hover-enlarge {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .hover-enlarge:hover {
+            transform: scale(1.1);
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .generated-image {
+            max-width: 50%; /* Ensure the image fits within its container */
+            height: auto;
+            border-radius: 5px;
+            /* Remove any animation effects */
+        }
+
+        .spinner-border {
+            display: inline-block; /* Ensure the spinner is visible */
+        }
     </style>
 </head>
 
@@ -88,7 +113,7 @@
             <h5 class="card-title">Upscale</h5>
             <p class="card-text">Upscale your image to a higher quality.</p>
             <button class="btn btn-primary upscale-action" data-bs-toggle="modal" data-bs-target="#upscaleModal">Do it!</button>
-            <button class="btn btn-danger mt-2" onclick="document.getElementById('upscalePopup').style.display='none'">Close</button>
+            <button id="closeUpscalePopup" class="btn btn-danger mt-2" onclick="document.getElementById('upscalePopup').style.display='none'">Close</button>
         </div>
     </div>
     <div id="removeBackgroundPopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
@@ -108,50 +133,44 @@
         </div>
     </div>
     <div class="container mt-5">
-        <!-- Clear History Button -->
-        <div class="d-flex justify-content-between mb-3">
-            <button id="clearHistoryBtn" class="btn btn-danger">Clear History</button>
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="generatorDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    Select Image Generator
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="generatorDropdown">
-                    <li><a class="dropdown-item generator-option" href="#" data-generator="openai">OpenAI</a></li>
-                    <li><a class="dropdown-item generator-option" href="#" data-generator="flux">Flux (Premium)</a></li>
-                    <li><a class="dropdown-item generator-option" href="#" data-generator="stability">Stability (Premium)</a></li>
-                    <li><a class="dropdown-item generator-option" href="#" data-generator="boreal">Boreal (Premium)</a></li>
-                    <li><a class="dropdown-item generator-option" href="#" data-generator="phantasma-anime">Phantasma Anime (Premium)</a></li>
-                </ul>
-                <p id="selectedGenerator">Selected Generator: Flux</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                Image Generator Chatbot
-            </div>
-            <div class="card-body" id="chatBody">
-                <!-- Chat messages will go here -->
-            </div>
+        <!-- Chat messages will go here -->
+        <div class="card-body" id="chatBody">
+            <!-- Chat messages will go here -->
         </div>
 
         <!-- Prompt form -->
         <form id="promptForm" class="mt-3">
             <textarea id="promptInput" class="form-control" rows="3" placeholder="Enter a prompt..."></textarea>
             <br>
-            <button type="submit" id="generateBtn" class="btn btn-primary">Generate Image</button>
-            <div class="spinner-border text-primary mt-2" role="status" id="generateSpinner">
+            <!-- Removed the standalone Generate Image button -->
+            <div class="spinner-border text-primary mt-2" role="status" id="generateSpinner" style="display: none;">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </form>
 
-        <!-- Video container -->
-        <div class="card mt-4">
-            <div class="card-header">
-                Video Generator
+        <!-- Align buttons using Bootstrap grid -->
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <button id="clearHistoryBtn" class="btn btn-danger w-100">Clear History</button>
             </div>
-            <div class="card-body" id="videoContainer">
-                <!-- Video will be inserted here -->
+            <div class="col-md-4">
+                <!-- This is now the main Generate Image button -->
+                <button type="submit" form="promptForm" id="generateBtn" class="btn btn-primary w-100">Generate Image</button>
+            </div>
+            <div class="col-md-4">
+                <div class="dropdown w-100">
+                    <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="generatorDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Select Image Generator
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="generatorDropdown">
+                        <li><a class="dropdown-item generator-option" href="#" data-generator="openai">OpenAI</a></li>
+                        <li><a class="dropdown-item generator-option" href="#" data-generator="flux">Flux (Premium)</a></li>
+                        <li><a class="dropdown-item generator-option" href="#" data-generator="stability">Stability (Premium)</a></li>
+                        <li><a class="dropdown-item generator-option" href="#" data-generator="boreal">Boreal (Premium)</a></li>
+                        <li><a class="dropdown-item generator-option" href="#" data-generator="phantasma-anime">Phantasma Anime (Premium)</a></li>
+                    </ul>
+                    <p id="selectedGenerator" class="text-center mt-2">Selected Generator: Flux</p>
+                </div>
             </div>
         </div>
     </div>
@@ -167,7 +186,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body text-center">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border text-primary" role="status" id="videoSpinner">
               <span class="visually-hidden">Loading...</span>
             </div>
             <p class="mt-3">Video generation is in progress...</p>
@@ -186,18 +205,22 @@
                 <div class="modal-body text-center">
                     <div class="row">
                         <div class="col-md-6">
-                            <img id="upscaleImage" src="" alt="Image to be upscaled" style="max-width: 100%; height: auto; border-radius: 5px;">
+                            <img id="upscaleImage" src="static/your_image.png" alt="Image to be upscaled" class="hover-enlarge" style="max-width: 100%; height: auto; border-radius: 5px;">
                         </div>
                         <div class="col-md-6">
                             <!-- Placeholder for new image -->
                             <div id="newImagePlaceholder" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
-                                <span>New Image Placeholder</span>
+                                <button class="btn btn-primary" id="generateUpscaleBtn">Generate</button>
+                                <div class="spinner-border text-primary" id="upscaleSpinner" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="saveUpscaleBtn">Save</button>
                 </div>
             </div>
         </div>
@@ -321,46 +344,7 @@
                 const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
     
                 if (response.ok) {
-                    // Append the model name with the image and download/regenerate icons
-                    chatBody.innerHTML += `
-                        <div class="bot-message">
-                            <strong>${selectedGenerator.charAt(0).toUpperCase() + selectedGenerator.slice(1)}:</strong><br>
-                            <div class="bot-image">
-                                <img src="${data.image_url}" alt="Generated Image">
-                                <div class="image-actions d-flex justify-content-center">
-                                    <div class="download-icon mx-2">
-                                        <a href="/download-image/${data.image_url.split('/').pop()}" download>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    <div class="camera-icon mx-2" role="button" tabindex="0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-camera-reels" viewBox="0 0 16 16">
-                                            <path d="M6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0M1 3a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/>
-                                            <path d="M9 6h.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 7.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 16H2a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm6 8.73V7.27l-3.5 1.555v4.35zM1 8v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/>
-                                            <path d="M9 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6M7 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
-                                        </svg>
-                                    </div>
-                                    <div class="regenerate-icon mx-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="${prompt}" data-generator="${selectedGenerator}" viewBox="0 0 16 16">
-                                            <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
-                                        </svg>
-                                        <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                    </div>
-                                    <div class="edit-icon mx-2" role="button" tabindex="0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-                                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    appendToChat('image', data.image_url, selectedGenerator);
                 } else {
                     chatBody.innerHTML += `
                         <div class="bot-message text-danger">
@@ -385,98 +369,53 @@
             }
         }
     
-        // Function to regenerate an image
-        async function regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId) {
+        function appendToChat(contentType, contentUrl, generator) {
             const chatBody = document.getElementById('chatBody');
-            const generateSpinner = document.getElementById('generateSpinner');
-            const generateBtn = document.getElementById('generateBtn');
-    
-            const regenerateBtn = document.getElementById(regenerateBtnId);
-            const regenerateSpinner = document.getElementById(regenerateSpinnerId);
-    
-            // Replace the regenerate icon with the spinner
-            regenerateBtn.style.display = 'none';
-            regenerateSpinner.style.display = 'inline-block';
-    
-            // Replace the generate button with its spinner
-            generateBtn.style.display = 'none';
-            generateSpinner.style.display = 'block';
-    
-            try {
-                const response = await fetch('/regenerate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: prompt, generator: generator })
-                });
-    
-                const data = await response.json();
-                const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
-    
-                if (response.ok) {
-                    // Append the regenerated image to the chat
-                    chatBody.innerHTML += `
-                        <div class="bot-message">
-                            <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)} (Regenerated):</strong><br>
-                            <div class="bot-image">
-                                <img src="${data.image_url}" alt="Regenerated Image">
-                                <div class="image-actions d-flex justify-content-center">
-                                    <div class="download-icon mx-2">
-                                        <a href="/download-image/${data.image_url.split('/').pop()}" download>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    <div class="camera-icon mx-2" role="button" tabindex="0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-camera-reels" viewBox="0 0 16 16">
-                                            <path d="M6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0M1 3a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/>
-                                            <path d="M9 6h.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 7.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 16H2a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm6 8.73V7.27l-3.5 1.555v4.35zM1 8v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/>
-                                            <path d="M9 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6M7 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
-                                        </svg>
-                                    </div>
-                                    <div class="regenerate-icon mx-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="${prompt}" data-generator="${generator}" viewBox="0 0 16 16">
-                                            <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
-                                        </svg>
-                                        <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                    </div>
-                                    <div class="edit-icon mx-2" role="button" tabindex="0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-                                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
-                                        </svg>
-                                    </div>
-                                </div>
+            const uniqueId = generateUniqueId();
+            const contentHtml = contentType === 'image' ? `
+                <div class="bot-image">
+                    <img src="/static/${contentUrl}" alt="Generated Image" style="max-width: 100%; height: auto; border-radius: 5px;">
+                </div>
+            ` : `
+                <div class="bot-video">
+                    <video controls style="max-width: 100%; height: auto; border-radius: 5px;">
+                        <source src="/static/${contentUrl}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            `;
+
+            chatBody.innerHTML += `
+                <div class="bot-message">
+                    <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
+                    ${contentHtml}
+                    <div class="image-actions d-flex justify-content-center">
+                        <div class="download-icon mx-2">
+                            <a href="/static/${contentUrl}" download>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="regenerate-icon mx-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="" data-generator="${generator}" viewBox="0 0 16 16">
+                                <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+                            </svg>
+                            <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
-                    `;
-                } else {
-                    chatBody.innerHTML += `
-                        <div class="bot-message text-danger">
-                            <strong>Error:</strong> ${data.error}
+                        <div class="edit-icon mx-2" role="button" tabindex="0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                            </svg>
                         </div>
-                    `;
-                }
-    
-            } catch (error) {
-                chatBody.innerHTML += `
-                    <div class="bot-message text-danger">
-                        <strong>Error:</strong> ${error.message}
                     </div>
-                `;
-            } finally {
-                // Make sure both buttons return correctly
-                regenerateBtn.style.display = 'inline-block';
-                regenerateSpinner.style.display = 'none';
-    
-                generateBtn.style.display = 'block';
-                generateSpinner.style.display = 'none';
-    
-                chatBody.scrollTop = chatBody.scrollHeight;  // Scroll to the bottom
-            }
+                </div>
+            `;
+            chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
         }
     
         // Add event listener for "Regenerate" icon clicks
@@ -488,12 +427,16 @@
                 const generator = event.target.getAttribute('data-generator');
                 regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId);
             }
-    
+
             if (event.target.closest('.camera-icon')) {
                 const imgElement = event.target.closest('.bot-image').querySelector('img');
                 const imagePath = imgElement.src.split('/').pop(); // Extract the file name from the URL
-                console.log('Image path:', imagePath); // Log the image path for debugging
     
+                // Show the video generation modal
+                const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+                videoModal.show();
+    
+                // Make the API call to generate the video
                 fetch('/generate-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -502,8 +445,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.video_url) {
-                        console.log('Video URL:', data.video_url);
-                        displayVideo(data.video_url); // Call function to display video
+                        // Append the video to the chat
+                        appendToChat('video', data.video_url, selectedGenerator);
                     } else {
                         alert('Error generating video: ' + data.error);
                     }
@@ -511,96 +454,27 @@
                 .catch(error => {
                     console.error('Error:', error);
                     alert('An error occurred while generating the video.');
+                })
+                .finally(() => {
+                    // Hide the modal when the process is complete (success or error)
+                    videoModal.hide();
                 });
             }
-    
-            if (event.target.closest('.edit-icon')) {
-                const editMessage = document.getElementById('editMessage');
-                editMessage.style.display = 'block'; // Show the edit toolbar
 
-                // Get the image URL from the selected bot message
+            if (event.target.closest('.edit-icon')) {
                 const imgElement = event.target.closest('.bot-image').querySelector('img');
-                const imageUrl = imgElement.src; // This should be the URL of the image in the static folder
+                const imageUrl = imgElement.src;
 
                 // Set the image URL in all modals
                 document.getElementById('upscaleImage').src = imageUrl;
                 document.getElementById('removeBackgroundImage').src = imageUrl;
                 document.getElementById('imageMixerImage').src = imageUrl;
-            }
-    
-            if (event.target.id === 'closeEditMessage') {
+
+                // Show the edit toolbar
                 const editMessage = document.getElementById('editMessage');
-                editMessage.style.display = 'none'; // Hide the message when close button is clicked
-            }
-    
-            if (event.target.id === 'button1') {
-                const upscaleModal = new bootstrap.Modal(document.getElementById('upscaleModal'));
-                upscaleModal.show();
-            }
-    
-            if (event.target.closest('#button2')) {
-                const removeBackgroundModal = new bootstrap.Modal(document.getElementById('removeBackgroundModal'));
-                removeBackgroundModal.show();
-            }
-    
-            if (event.target.closest('#button3')) {
-                const imageMixerModal = new bootstrap.Modal(document.getElementById('imageMixerModal'));
-                imageMixerModal.show();
+                editMessage.style.display = 'block';
             }
         });
-    
-        window.addEventListener('load', async () => {
-            const videoContainer = document.getElementById('videoContainer');
-            
-            // Fetch the saved videos from the server
-            const response = await fetch('/get-videos');
-            const data = await response.json();
-    
-            if (response.ok && data.videos) {
-                data.videos.forEach(videoName => {
-                    videoContainer.innerHTML += `
-                        <div class="media-wrapper">
-                            <video controls>
-                                <source src="/static/${videoName}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                            <div class="video-actions d-flex justify-content-center mt-2">
-                                <div class="download-icon mx-2">
-                                    <a href="/static/${videoName}" download>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        });
-    
-        function displayVideo(videoName) {
-            const videoContainer = document.getElementById('videoContainer');
-            videoContainer.innerHTML += `
-                <div class="media-wrapper">
-                    <video controls>
-                        <source src="/static/${videoName}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="video-actions d-flex justify-content-center mt-2">
-                        <div class="download-icon mx-2">
-                            <a href="/static/${videoName}" download>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
     
         document.getElementById('promptForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -632,24 +506,27 @@
                 console.error('Error:', error);
             }
         });
-    
+        
+
+
         // Fetch and load conversation history on page load
         window.addEventListener('load', async () => {
             const chatBody = document.getElementById('chatBody');
             const response = await fetch('/conversation-history');
             const conversation = await response.json();
     
-            conversation.forEach(({ prompt, generator, image_url }) => {
+            conversation.forEach(({ prompt, generator, image_url, video_url }) => {
                 const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
-    
-                chatBody.innerHTML += `
+                
+                if (image_url) {
+                    chatBody.innerHTML += `
                     <div class="user-message">
                         <strong>User:</strong><br>${prompt}
                     </div>
                     <div class="bot-message">
                         <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
                         <div class="bot-image">
-                            <img src="${image_url}" alt="Generated Image">
+                            <img src="/static/${image_url}" alt="Generated Image">
                             <div class="image-actions d-flex justify-content-center">
                                 <div class="download-icon mx-2">
                                     <a href="/download-image/${image_url.split('/').pop()}" download>
@@ -667,7 +544,7 @@
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                 </div>
-                                <div class="camera-icon mx-2" role="button" tabindex="0">
+                                <div class="camera-icon mx-2" role="button" tabindex="0" id="generateVideoBtn">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-camera-reels" viewBox="0 0 16 16">
                                         <path d="M6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0M1 3a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/>
                                         <path d="M9 6h.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 7.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 16H2a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm6 8.73V7.27l-3.5 1.555v4.35zM1 8v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/>
@@ -684,10 +561,317 @@
                         </div>
                     </div>
                 `;
+
+                }
+
+                // Append video if available
+                if (video_url) {
+                    // Append video if available
+                    chatBody.innerHTML += `
+                        <div class="bot-message">
+                            <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
+                            <div class="bot-video" align="center">
+                                <video controls style="max-width: 100%; height: auto; border-radius: 5px;">
+                                    <source src="/static/${video_url}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                ${generateActionButtons(video_url, generator, uniqueId)}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                function generateActionButtons(contentUrl, generator, uniqueId) {
+                    return `
+                        <div class="image-actions d-flex justify-content-center">
+                            <div class="download-icon mx-2">
+                                <a href="/static/${contentUrl}" download>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            <div class="regenerate-icon mx-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="" data-generator="${generator}" viewBox="0 0 16 16">
+                                    <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+                                </svg>
+                                <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                            <div class="edit-icon mx-2" role="button" tabindex="0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    `;
+                }
+            
+                
             });
+
+            
     
             // Scroll to the bottom of the chat after loading the history
             chatBody.scrollTop = chatBody.scrollHeight;
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to add hover and click events to images
+            function addImageEvents(img) {
+                img.addEventListener('click', function() {
+                    window.open(this.src, '_blank');
+                });
+                img.classList.add('hover-enlarge');
+            }
+
+            // Add events to the original image
+            const originalImage = document.getElementById('upscaleImage');
+            addImageEvents(originalImage);
+
+            // Show the edit toolbar when the edit icon is clicked
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('.edit-icon')) {
+                    const imgElement = event.target.closest('.bot-image').querySelector('img');
+                    const imageUrl = imgElement.src;
+
+                    // Set the image URL in all modals
+                    document.getElementById('upscaleImage').src = imageUrl;
+                    document.getElementById('removeBackgroundImage').src = imageUrl;
+                    document.getElementById('imageMixerImage').src = imageUrl;
+
+                    // Show the edit toolbar
+                    const editMessage = document.getElementById('editMessage');
+                    editMessage.style.display = 'block';
+                }
+            });
+
+            // Close the edit toolbar
+            document.getElementById('closeEditMessage').addEventListener('click', () => {
+                document.getElementById('editMessage').style.display = 'none';
+            });
+
+            // Generate upscale image
+            document.getElementById('generateUpscaleBtn').addEventListener('click', async function() {
+                const imagePath = originalImage.src.split('/').pop();
+                const response = await fetch('/upscale-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_path: imagePath })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    const newImage = document.createElement('img');
+                    newImage.src = `/static/${data.output_url}`; // Correctly construct the URL
+                    newImage.alt = "Upscaled Image";
+                    newImage.style = "max-width: 100%; height: auto; border-radius: 5px;";
+                    document.getElementById('newImagePlaceholder').innerHTML = '';
+                    document.getElementById('newImagePlaceholder').appendChild(newImage);
+
+                    // Add hover and click events to the new image
+                    addImageEvents(newImage);
+
+                    // Display the upscaled image in the chat area
+                    const chatBody = document.getElementById('chatBody');
+                    const chatMessage = document.createElement('div');
+                    chatMessage.className = 'bot-message';
+                    chatMessage.innerHTML = `
+                        <strong>Upscaled Image:</strong><br>
+                        <div align="center">
+                            <img src="/static/${data.output_url}" alt="Upscaled Image" class="center-image" style="max-width: 100%; height: auto; border-radius: 5px;" align="center">
+                        </div>
+                    `;
+                    chatBody.appendChild(chatMessage);
+                    chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+
+            // Save button functionality
+            document.getElementById('saveUpscaleBtn').addEventListener('click', function() {
+                const newImage = document.querySelector('#newImagePlaceholder img');
+                if (newImage) {
+                    const link = document.createElement('a');
+                    link.href = newImage.src;
+                    link.download = 'upscaled_image.png';
+                    link.click();
+                } else {
+                    alert('No upscaled image to save.');
+                }
+            });
+
+            // Add functionality for other buttons
+            document.getElementById('button2').addEventListener('click', () => {
+                // Add your remove background functionality here
+                console.log('Remove Background button clicked');
+            });
+
+            document.getElementById('button3').addEventListener('click', () => {
+                // Add your image mixer functionality here
+                console.log('Image Mixer button clicked');
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const upscaleCard = document.getElementById('upscaleCard');
+            const upscaleModal = document.getElementById('upscaleModal');
+            const closeUpscaleModal = document.getElementById('closeUpscaleModal');
+
+            // Show the upscale card when the "Upscale" button is clicked
+            document.getElementById('button1').addEventListener('click', () => {
+                upscaleCard.style.display = 'block';
+            });
+
+            // Show the upscale modal when the button in the upscale card is clicked
+            document.getElementById('triggerUpscaleModal').addEventListener('click', () => {
+                upscaleModal.style.display = 'block';
+            });
+
+            // Close the upscale modal
+            closeUpscaleModal.addEventListener('click', () => {
+                upscaleModal.style.display = 'none';
+            });
+
+            // Close the modal when clicking outside of it
+            window.addEventListener('click', (event) => {
+                if (event.target === upscaleModal) {
+                    upscaleModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show the upscale popup when the "Upscale" button is clicked
+            document.getElementById('button1').addEventListener('click', () => {
+                document.getElementById('upscalePopup').style.display = 'block';
+            });
+
+            // Show the remove background popup when the "Remove Background" button is clicked
+            document.getElementById('button2').addEventListener('click', () => {
+                document.getElementById('removeBackgroundPopup').style.display = 'block';
+            });
+
+            // Show the image mixer popup when the "Image Mixer" button is clicked
+            document.getElementById('button3').addEventListener('click', () => {
+                document.getElementById('imageMixerPopup').style.display = 'block';
+            });
+
+            // Close the edit toolbar
+            document.getElementById('closeEditMessage').addEventListener('click', () => {
+                document.getElementById('editMessage').style.display = 'none';
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show the upscale modal
+            document.getElementById('button1').addEventListener('click', () => {
+                const upscaleModal = new bootstrap.Modal(document.getElementById('upscaleModal'));
+                upscaleModal.show();
+            });
+
+            // Show the remove background modal
+            document.getElementById('button2').addEventListener('click', () => {
+                const removeBackgroundModal = new bootstrap.Modal(document.getElementById('removeBackgroundModal'));
+                removeBackgroundModal.show();
+            });
+
+            // Show the image mixer modal
+            document.getElementById('button3').addEventListener('click', () => {
+                const imageMixerModal = new bootstrap.Modal(document.getElementById('imageMixerModal'));
+                imageMixerModal.show();
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listener for the "Generate" button in the upscale modal
+            document.getElementById('generateUpscaleBtn').addEventListener('click', async function() {
+                const originalImage = document.getElementById('upscaleImage');
+                const imagePath = originalImage.src.split('/').pop(); // Extract the image path
+                const spinner = document.getElementById('upscaleSpinner');
+                const generateBtn = document.getElementById('generateUpscaleBtn');
+    
+                // Show the spinner and hide the button
+                spinner.style.display = 'block';
+                generateBtn.style.display = 'none';
+    
+                try {
+                    const response = await fetch('/upscale-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_path: imagePath })
+                    });
+    
+                    const data = await response.json();
+                    if (response.ok) {
+                        // Display the upscaled image in the placeholder
+                        const newImage = document.createElement('img');
+                        newImage.src = `/static/${data.output_url}`;
+                        newImage.alt = "Upscaled Image";
+                        newImage.style = "max-width: 100%; height: auto; border-radius: 5px;";
+                        const placeholder = document.getElementById('newImagePlaceholder');
+                        placeholder.innerHTML = ''; // Clear the placeholder
+                        placeholder.appendChild(newImage);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while trying to upscale the image.');
+                } finally {
+                    // Hide the spinner and show the button again
+                    spinner.style.display = 'none';
+                    generateBtn.style.display = 'block';
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listener for camera icon clicks
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('.camera-icon')) {
+                    const imgElement = event.target.closest('.bot-image').querySelector('img');
+                    const imagePath = imgElement.src.split('/').pop(); // Extract the file name from the URL
+    
+                    // Show the video generation modal
+                    const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+                    videoModal.show();
+    
+                    // Make the API call to generate the video
+                    fetch('/generate-video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_url: imagePath })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.video_url) {
+                            // Append the video to the chat
+                            appendToChat('video', data.video_url, selectedGenerator);
+                        } else {
+                            alert('Error generating video: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while generating the video.');
+                    })
+                    .finally(() => {
+                        // Hide the modal when the process is complete (success or error)
+                        videoModal.hide();
+                    });
+                }
+            });
         });
     </script>
 </body>
