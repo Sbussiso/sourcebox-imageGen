@@ -8,9 +8,9 @@
     <title>Image Generator Chatbot</title>
     <style>
         #chatBody {
-            max-height: 70vh;
-            overflow-y: auto;
-            border: 1px solid #ccc;
+            max-height: none; /* Remove the max-height restriction */
+            overflow-y: visible; /* Allow content to flow without a scrollbar */
+            border: none; /* Remove border if desired */
             padding: 10px;
         }
         .user-message, .bot-message {
@@ -98,6 +98,15 @@
         .spinner-border {
             display: inline-block; /* Ensure the spinner is visible */
         }
+
+        .bot-image img,
+        .generated-image {
+            display: block;
+            margin: 10px auto;
+            max-width: 50%; /* Adjusted to make images smaller */
+            height: auto;
+            border-radius: 5px;
+        }
     </style>
 </head>
 
@@ -133,50 +142,42 @@
         </div>
     </div>
     <div class="container mt-5">
-        <!-- Chat messages will go here -->
-        <div class="card-body" id="chatBody">
-            <!-- Chat messages will go here -->
-        </div>
-
-        <!-- Prompt form -->
+        <!-- Move the prompt form and buttons above the chat display -->
         <form id="promptForm" class="mt-3">
             <textarea id="promptInput" class="form-control" rows="3" placeholder="Enter a prompt..."></textarea>
-            <br>
-            <!-- Removed the standalone Generate Image button -->
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <button id="clearHistoryBtn" class="btn btn-danger w-100">Clear History</button>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" form="promptForm" id="generateBtn" class="btn btn-primary w-100">Generate Image</button>
+                </div>
+                <div class="col-md-4">
+                    <div class="dropdown w-100">
+                        <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="generatorDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Select Image Generator
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="generatorDropdown">
+                            <li><a class="dropdown-item generator-option" href="#" data-generator="openai">OpenAI</a></li>
+                            <li><a class="dropdown-item generator-option" href="#" data-generator="flux">Flux (Premium)</a></li>
+                            <li><a class="dropdown-item generator-option" href="#" data-generator="stability">Stability (Premium)</a></li>
+                            <li><a class="dropdown-item generator-option" href="#" data-generator="boreal">Boreal (Premium)</a></li>
+                            <li><a class="dropdown-item generator-option" href="#" data-generator="phantasma-anime">Phantasma Anime (Premium)</a></li>
+                        </ul>
+                        <p id="selectedGenerator" class="text-center mt-2">Selected Generator: Flux</p>
+                    </div>
+                </div>
+            </div>
             <div class="spinner-border text-primary mt-2" role="status" id="generateSpinner" style="display: none;">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </form>
 
-        <!-- Align buttons using Bootstrap grid -->
-        <div class="row mt-3">
-            <div class="col-md-4">
-                <button id="clearHistoryBtn" class="btn btn-danger w-100">Clear History</button>
-            </div>
-            <div class="col-md-4">
-                <!-- This is now the main Generate Image button -->
-                <button type="submit" form="promptForm" id="generateBtn" class="btn btn-primary w-100">Generate Image</button>
-            </div>
-            <div class="col-md-4">
-                <div class="dropdown w-100">
-                    <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="generatorDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        Select Image Generator
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="generatorDropdown">
-                        <li><a class="dropdown-item generator-option" href="#" data-generator="openai">OpenAI</a></li>
-                        <li><a class="dropdown-item generator-option" href="#" data-generator="flux">Flux (Premium)</a></li>
-                        <li><a class="dropdown-item generator-option" href="#" data-generator="stability">Stability (Premium)</a></li>
-                        <li><a class="dropdown-item generator-option" href="#" data-generator="boreal">Boreal (Premium)</a></li>
-                        <li><a class="dropdown-item generator-option" href="#" data-generator="phantasma-anime">Phantasma Anime (Premium)</a></li>
-                    </ul>
-                    <p id="selectedGenerator" class="text-center mt-2">Selected Generator: Flux</p>
-                </div>
-            </div>
+        <!-- Chat messages will go here -->
+        <div class="card-body mt-3" id="chatBody">
+            <!-- Chat messages will go here -->
         </div>
     </div>
-    <br/>
-    <br/>
-    <br/>
     <!-- Bootstrap Modal -->
     <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -385,37 +386,39 @@
                 </div>
             `;
 
-            chatBody.innerHTML += `
-                <div class="bot-message">
-                    <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
-                    ${contentHtml}
-                    <div class="image-actions d-flex justify-content-center">
-                        <div class="download-icon mx-2">
-                            <a href="/static/${contentUrl}" download>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                                </svg>
-                            </a>
-                        </div>
-                        <div class="regenerate-icon mx-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="" data-generator="${generator}" viewBox="0 0 16 16">
-                                <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+            const newMessage = document.createElement('div');
+            newMessage.className = 'bot-message';
+            newMessage.innerHTML = `
+                <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
+                ${contentHtml}
+                <div class="image-actions d-flex justify-content-center">
+                    <div class="download-icon mx-2">
+                        <a href="/static/${contentUrl}" download>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
                             </svg>
-                            <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
+                        </a>
+                    </div>
+                    <div class="regenerate-icon mx-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="" data-generator="${generator}" viewBox="0 0 16 16">
+                            <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+                        </svg>
+                        <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="edit-icon mx-2" role="button" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
-                            </svg>
-                        </div>
+                    </div>
+                    <div class="edit-icon mx-2" role="button" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                        </svg>
                     </div>
                 </div>
             `;
-            chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+
+            // Prepend the new message to the chat body
+            chatBody.prepend(newMessage);
         }
     
         // Add event listener for "Regenerate" icon clicks
@@ -507,23 +510,20 @@
             }
         });
         
-
-
-        // Fetch and load conversation history on page load
-        window.addEventListener('load', async () => {
+        // Function to load conversation history
+        async function loadConversationHistory() {
             const chatBody = document.getElementById('chatBody');
             const response = await fetch('/conversation-history');
             const conversation = await response.json();
-    
+
+            // Prepend each message to ensure newest at the top
             conversation.forEach(({ prompt, generator, image_url, video_url }) => {
-                const uniqueId = generateUniqueId();  // Generate unique ID for the regenerate button and spinner
-                
+                const uniqueId = generateUniqueId();
+
                 if (image_url) {
-                    chatBody.innerHTML += `
-                    <div class="user-message">
-                        <strong>User:</strong><br>${prompt}
-                    </div>
-                    <div class="bot-message">
+                    const newMessage = document.createElement('div');
+                    newMessage.className = 'bot-message';
+                    newMessage.innerHTML = `
                         <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
                         <div class="bot-image">
                             <img src="/static/${image_url}" alt="Generated Image">
@@ -531,8 +531,8 @@
                                 <div class="download-icon mx-2">
                                     <a href="/download-image/${image_url.split('/').pop()}" download>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
                                         </svg>
                                     </a>
                                 </div>
@@ -544,13 +544,6 @@
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                 </div>
-                                <div class="camera-icon mx-2" role="button" tabindex="0" id="generateVideoBtn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-camera-reels" viewBox="0 0 16 16">
-                                        <path d="M6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0M1 3a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/>
-                                        <path d="M9 6h.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 7.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 16H2a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm6 8.73V7.27l-3.5 1.555v4.35zM1 8v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1"/>
-                                        <path d="M9 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6M7 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
-                                    </svg>
-                                </div>
                                 <div class="edit-icon mx-2" role="button" tabindex="0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -559,65 +552,29 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `;
-
+                    `;
+                    chatBody.prepend(newMessage);
                 }
 
-                // Append video if available
                 if (video_url) {
-                    // Append video if available
-                    chatBody.innerHTML += `
-                        <div class="bot-message">
-                            <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
-                            <div class="bot-video" align="center">
-                                <video controls style="max-width: 100%; height: auto; border-radius: 5px;">
-                                    <source src="/static/${video_url}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
-                                ${generateActionButtons(video_url, generator, uniqueId)}
-                            </div>
+                    const newMessage = document.createElement('div');
+                    newMessage.className = 'bot-message';
+                    newMessage.innerHTML = `
+                        <strong>${generator.charAt(0).toUpperCase() + generator.slice(1)}:</strong><br>
+                        <div class="bot-video" align="center">
+                            <video controls style="max-width: 100%; height: auto; border-radius: 5px;">
+                                <source src="/static/${video_url}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
                         </div>
                     `;
+                    chatBody.prepend(newMessage);
                 }
-
-                function generateActionButtons(contentUrl, generator, uniqueId) {
-                    return `
-                        <div class="image-actions d-flex justify-content-center">
-                            <div class="download-icon mx-2">
-                                <a href="/static/${contentUrl}" download>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                                    </svg>
-                                </a>
-                            </div>
-                            <div class="regenerate-icon mx-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-repeat regenerate-btn" id="regenerateBtn-${uniqueId}" data-prompt="" data-generator="${generator}" viewBox="0 0 16 16">
-                                    <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
-                                </svg>
-                                <div class="spinner-border spinner-border-sm text-primary" id="regenerateSpinner-${uniqueId}" role="status" style="display: none;">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <div class="edit-icon mx-2" role="button" tabindex="0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
-                                </svg>
-                            </div>
-                        </div>
-                    `;
-                }
-            
-                
             });
+        }
 
-            
-    
-            // Scroll to the bottom of the chat after loading the history
-            chatBody.scrollTop = chatBody.scrollHeight;
-        });
+        // Call the function on page load
+        window.addEventListener('load', loadConversationHistory);
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -872,6 +829,52 @@
                     });
                 }
             });
+        });
+    </script>
+    <script>
+        // Define the regenerateImage function
+        async function regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId) {
+            const regenerateSpinner = document.getElementById(regenerateSpinnerId);
+            const regenerateBtn = document.getElementById(regenerateBtnId);
+
+            // Show the spinner and hide the button
+            regenerateSpinner.style.display = 'block';
+            regenerateBtn.style.display = 'none';
+
+            try {
+                // Send the prompt to the server with the selected generator
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt, generator: generator })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    appendToChat('image', data.image_url, generator);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while regenerating the image.');
+            } finally {
+                // Hide the spinner and show the button again
+                regenerateSpinner.style.display = 'none';
+                regenerateBtn.style.display = 'block';
+            }
+        }
+
+        // Ensure the event listener for regenerate buttons is set up
+        document.addEventListener('click', function (event) {
+            if (event.target.classList.contains('regenerate-btn')) {
+                const regenerateBtnId = event.target.id;
+                const regenerateSpinnerId = `regenerateSpinner-${regenerateBtnId.split('-')[1]}`;
+                const prompt = event.target.getAttribute('data-prompt');
+                const generator = event.target.getAttribute('data-generator');
+                regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId);
+            }
         });
     </script>
 </body>
