@@ -139,30 +139,7 @@
         <button class="btn btn-success mx-1" id="button3">Image Mixer</button>
         <button id="closeEditMessage" class="btn btn-danger mx-1">Close</button>
     </div>
-    <div id="upscalePopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
-        <div class="card-body">
-            <h5 class="card-title">Upscale</h5>
-            <p class="card-text">Upscale your image to a higher quality.</p>
-            <button class="btn btn-primary upscale-action" data-bs-toggle="modal" data-bs-target="#upscaleModal">Do it!</button>
-            <button id="closeUpscalePopup" class="btn btn-danger mt-2" onclick="document.getElementById('upscalePopup').style.display='none'">Close</button>
-        </div>
-    </div>
-    <div id="removeBackgroundPopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
-        <div class="card-body">
-            <h5 class="card-title">Remove Background</h5>
-            <p class="card-text">Attempts to remove the background from your image.</p>
-            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#removeBackgroundModal">Remove</button>
-            <button class="btn btn-danger mt-2" onclick="document.getElementById('removeBackgroundPopup').style.display='none'">Close</button>
-        </div>
-    </div>
-    <div id="imageMixerPopup" class="card mt-3" style="display: none; max-width: 300px; margin: 0 auto;">
-        <div class="card-body">
-            <h5 class="card-title">Image Mixer</h5>
-            <p class="card-text">Mix two images to create a new one.</p>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#imageMixerModal">Mix Images</button>
-            <button class="btn btn-danger mt-2" onclick="document.getElementById('imageMixerPopup').style.display='none'">Close</button>
-        </div>
-    </div>
+    
     <div class="container mt-5">
         <!-- Move the prompt form and buttons above the chat display -->
         <form id="promptForm" class="mt-3">
@@ -265,7 +242,7 @@
                         <div class="col-md-6">
                             <!-- Placeholder for new image -->
                             <div id="newImagePlaceholder" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
-                                <span>New Image Placeholder</span>
+                                <span>Coming Soon!</span>
                             </div>
                         </div>
                     </div>
@@ -293,13 +270,13 @@
                         <div class="col-md-4">
                             <!-- First Placeholder for new image -->
                             <div id="newImagePlaceholder1" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
-                                <span>New Image Placeholder 1</span>
+                                <span>Coming Soon!</span>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <!-- Second Placeholder for new image -->
                             <div id="newImagePlaceholder2" style="width: 100%; height: 100%; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
-                                <span>New Image Placeholder 2</span>
+                                <span>Coming Soon!</span>
                             </div>
                         </div>
                     </div>
@@ -448,62 +425,42 @@
             chatBody.prepend(newMessage);
         }
     
-        // Add event listener for "Regenerate" icon clicks
-        document.addEventListener('click', function (event) {
-            if (event.target.classList.contains('regenerate-btn')) {
-                const regenerateBtnId = event.target.id;
-                const regenerateSpinnerId = `regenerateSpinner-${regenerateBtnId.split('-')[1]}`;
-                const prompt = event.target.getAttribute('data-prompt');
-                const generator = event.target.getAttribute('data-generator');
-                regenerateImage(prompt, generator, regenerateBtnId, regenerateSpinnerId);
-            }
-
-            if (event.target.closest('.camera-icon')) {
-                const imgElement = event.target.closest('.bot-image').querySelector('img');
-                const imagePath = imgElement.src.split('/').pop(); // Extract the file name from the URL
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listener for camera icon clicks
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('.camera-icon')) {
+                    const imgElement = event.target.closest('.bot-image').querySelector('img');
+                    const imagePath = imgElement.src.split('/').pop(); // Extract the file name from the URL
     
-                // Show the video generation modal
-                const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
-                videoModal.show();
+                    // Show the video generation modal
+                    const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+                    videoModal.show();
     
-                // Make the API call to generate the video
-                fetch('/generate-video', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image_url: imagePath })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.video_url) {
-                        // Append the video to the chat
-                        appendToChat('video', data.video_url, selectedGenerator);
-                    } else {
-                        alert('Error generating video: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while generating the video.');
-                })
-                .finally(() => {
-                    // Hide the modal when the process is complete (success or error)
-                    videoModal.hide();
-                });
-            }
-
-            if (event.target.closest('.edit-icon')) {
-                const imgElement = event.target.closest('.bot-image').querySelector('img');
-                const imageUrl = imgElement.src;
-
-                // Set the image URL in all modals
-                document.getElementById('upscaleImage').src = imageUrl;
-                document.getElementById('removeBackgroundImage').src = imageUrl;
-                document.getElementById('imageMixerImage').src = imageUrl;
-
-                // Show the edit toolbar
-                const editMessage = document.getElementById('editMessage');
-                editMessage.style.display = 'block';
-            }
+                    // Make the API call to generate the video
+                    fetch('/generate-video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_url: imagePath })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.video_url) {
+                            // Append the video to the chat
+                            appendToChat('video', data.video_url, selectedGenerator);
+                        } else {
+                            alert('Error generating video: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while generating the video.');
+                    })
+                    .finally(() => {
+                        // Hide the modal when the process is complete (success or error)
+                        videoModal.hide();
+                    });
+                }
+            });
         });
     
         document.getElementById('promptForm').addEventListener('submit', function(e) {
@@ -540,10 +497,12 @@
         // Function to load conversation history
         async function loadConversationHistory() {
             const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = ''; // Clear the chat body before loading history
             const response = await fetch('/conversation-history');
             const conversation = await response.json();
 
-            // Prepend each message to ensure newest at the top
+            const addedVideos = new Set(); // Track added video URLs
+
             conversation.forEach(({ prompt, generator, image_url, video_url }) => {
                 const uniqueId = generateUniqueId();
 
@@ -590,7 +549,8 @@
                     chatBody.prepend(newMessage);
                 }
 
-                if (video_url) {
+                if (video_url && !addedVideos.has(video_url)) {
+                    addedVideos.add(video_url); // Add video URL to the set
                     const newMessage = document.createElement('div');
                     newMessage.className = 'bot-message';
                     newMessage.innerHTML = `
@@ -823,45 +783,6 @@
                     // Hide the spinner and show the button again
                     spinner.style.display = 'none';
                     generateBtn.style.display = 'block';
-                }
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Event listener for camera icon clicks
-            document.addEventListener('click', function(event) {
-                if (event.target.closest('.camera-icon')) {
-                    const imgElement = event.target.closest('.bot-image').querySelector('img');
-                    const imagePath = imgElement.src.split('/').pop(); // Extract the file name from the URL
-    
-                    // Show the video generation modal
-                    const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
-                    videoModal.show();
-    
-                    // Make the API call to generate the video
-                    fetch('/generate-video', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image_url: imagePath })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.video_url) {
-                            // Append the video to the chat
-                            appendToChat('video', data.video_url, selectedGenerator);
-                        } else {
-                            alert('Error generating video: ' + data.error);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while generating the video.');
-                    })
-                    .finally(() => {
-                        // Hide the modal when the process is complete (success or error)
-                        videoModal.hide();
-                    });
                 }
             });
         });

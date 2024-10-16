@@ -1,0 +1,131 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100vw;
+    height: 100vh;
+}
+
+canvas {
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1; /* Ensure the canvas is behind other content */
+}
+
+#chatBody {
+    background-color: transparent; /* transparency */
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.user-message, .bot-message {
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.user-message {
+    background-color: rgba(255, 255, 255, 0.9); /* 80% transparency */
+    text-align: right;
+}
+
+.bot-message {
+    background-color: rgba(255, 255, 255, 0.9); /* 80% transparency */
+    text-align: left;
+}
+
+.bot-image img {
+    display: block;
+    margin: 10px auto;
+    max-width: 50%; /* Reduce the maximum width */
+    height: auto;
+    border-radius: 5px;
+}
+
+.spinner-border {
+    display: none;
+}
+
+.download-icon, .regenerate-icon {
+    cursor: pointer;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.camera-icon {
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 5px;
+    text-align: center;
+}
+
+#videoContainer video {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+.media-wrapper {
+    background-color: #f4f4f4; /* Match the background color of the image container */
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    text-align: center; /* Center the video and download icon */
+}
+
+.media-wrapper img {
+    width: 80%; /* Set a smaller width for images */
+    max-width: 400px; /* Set a smaller maximum width */
+    height: auto;
+    border-radius: 5px;
+}
+
+.media-wrapper video {
+    width: 80%; /* Ensure videos have the same width */
+    max-width: 700px; /* Ensure videos have the same maximum width */
+    height: auto;
+    border-radius: 5px;
+}
+
+.hover-enlarge {
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.hover-enlarge:hover {
+    transform: scale(1.1);
+}
+
+.image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.generated-image {
+    max-width: 50%; /* Ensure the image fits within its container */
+    height: auto;
+    border-radius: 5px;
+    /* Remove any animation effects */
+}
+
+.spinner-border {
+    display: inline-block; /* Ensure the spinner is visible */
+}
+
+.bot-image img,
+.generated-image {
+    display: block;
+    margin: 10px auto;
+    max-width: 50%; /* Adjusted to make images smaller */
+    height: auto;
+    border-radius: 5px;
+}
